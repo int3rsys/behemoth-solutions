@@ -1,7 +1,7 @@
 ## Behemoth0
 
 This one is quite simple. I will show a several methods to get the code:
-# using _gdb_
+### using _gdb_
 1) Fire up gdb
 2) Disassemble main
 3) Find compare command and check the value being compared to our pass
@@ -99,7 +99,7 @@ okay now eax should contain the string:
 ```
 wallah.
 
-# next method - using ltrace
+### next method - using ltrace
 ltrace and strace are very useful tools for analysing function calls. ltrace traces all internal function that were called
 during the run of our program:
 ```
@@ -116,7 +116,7 @@ puts("Access denied.."Access denied..
 ```
 As we can see, strcmp was called and compared our value 'NOTTHEPASS' with 'eatmyshorts'. Wallah.
 
-# sometimes, it even possible to use 'strings' in order to print all prinitable charaters in our program. here it won't be useful:
+### sometimes, it even possible to use 'strings' in order to print all prinitable charaters in our program. here it won't be useful:
 ```
 behemoth0@behemoth:/behemoth$ strings behemoth0
 /lib/ld-linux.so.2
@@ -229,7 +229,7 @@ Access granted..
 $ cat /etc/behemoth_pass/behemoth1
 ...
 ```
-
+## Behemoth1
 
 
 
