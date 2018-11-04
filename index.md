@@ -396,6 +396,42 @@ quit
 ^C
 ```
 
+## Behemoth3
+
+Okay, after checking the file contents with `file behemoth3` and `r2 behemoth3; -i` we get the usual info. No aslr and nx bit. Let's dissas our file:
+
+```
+(gdb) disas main
+Dump of assembler code for function main:
+   0x0804847b <+0>:	push   ebp
+   0x0804847c <+1>:	mov    ebp,esp
+   0x0804847e <+3>:	sub    esp,0xc8
+   0x08048484 <+9>:	push   0x8048560
+   0x08048489 <+14>:	call   0x8048330 <printf@plt>
+   0x0804848e <+19>:	add    esp,0x4
+   0x08048491 <+22>:	mov    eax,ds:0x80497c0
+   0x08048496 <+27>:	push   eax
+   0x08048497 <+28>:	push   0xc8
+   0x0804849c <+33>:	lea    eax,[ebp-0xc8]
+   0x080484a2 <+39>:	push   eax
+   0x080484a3 <+40>:	call   0x8048340 <fgets@plt>
+   0x080484a8 <+45>:	add    esp,0xc
+   0x080484ab <+48>:	push   0x8048574
+   0x080484b0 <+53>:	call   0x8048330 <printf@plt>
+   0x080484b5 <+58>:	add    esp,0x4
+   0x080484b8 <+61>:	lea    eax,[ebp-0xc8]
+   0x080484be <+67>:	push   eax
+   0x080484bf <+68>:	call   0x8048330 <printf@plt>
+   0x080484c4 <+73>:	add    esp,0x4
+   0x080484c7 <+76>:	push   0x804857e
+   0x080484cc <+81>:	call   0x8048350 <puts@plt>
+   0x080484d1 <+86>:	add    esp,0x4
+   0x080484d4 <+89>:	mov    eax,0x0
+   0x080484d9 <+94>:	leave  
+   0x080484da <+95>:	ret    
+End of assembler dump.
+```
+![Screenshot](behemoth3.png)
 
 
 You can use the [editor on GitHub](https://github.com/int3rsys/behemoth-solutions/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
