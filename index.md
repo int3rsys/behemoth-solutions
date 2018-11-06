@@ -539,6 +539,70 @@ cat /etc/behemoth_pass/behemoth4
 ********
 ```
 
+### Behemoth4
+
+This one is 'fairly' easy. As always, I start the program in radare2 to seek out for information and structure of the program with the graph option:
+```
+behemoth4@behemoth:~$ cd /behemoth
+behemoth4@behemoth:/behemoth$ radare2 behemoth4
+ -- Radare2 is like violence. If it doesn't solve your problem, you aren't using enough.
+[0x08048480]> i
+blksz    0x0
+block    0x100
+fd       3
+file     behemoth4
+format   elf
+iorw     false
+mode     r-x
+size     0x1d40
+humansz  7.3K
+type     EXEC (Executable file)
+arch     x86
+baddr    0x8048000
+binsz    6246
+bintype  elf
+bits     32
+canary   false
+sanitiz  false
+class    ELF32
+crypto   false
+endian   little
+havecode true
+intrp    /lib/ld-linux.so.2
+lang     c
+linenum  true
+lsyms    true
+machine  Intel 80386
+maxopsz  16
+minopsz  1
+nx       true
+os       linux
+pcalign  0
+pic      false
+relocs   true
+relro    partial
+rpath    NONE
+static   false
+stripped false
+subsys   linux
+va       true
+
+```
+Nothing special in here. Let's move on and see how the program stractured:
+![Image](behemoth4_2.png)
+![Image](behemoth4_1.png)
+
+We can see that at the beginning, in the first box, the program checks the pid of the process. Every program that is executed is forked and then received a new PID. It's going to be useful for us later. So we first check the pid of the program and then we push that number (returned in eax from the function), and then we can see that the string "/tmp/%d" is pushed, then the buffer to write to the string. So for new, the address "local_28h" contains the string "/tmp/_PID_OF_THE_FILE_". Next, we can see the fopen function. You guessed correctly, we are trying to open the file /tmp/_our_program's_pid_. If we succeed, we move next to the true (green) arrow box, we can see that the program is put to sleep for one second and then it's printing a text. Then, we move to the core of this challange - we have an a loop in which we read char-by-char from the file /tmp/_our_program's_pid_ . Okay, what can we do from here? First, I though that maybe I can exploit the fgetc / putchar functions, but because we read the text char-by-char, there is nothing we can do. After thinking half an hour, an Idea came into my head: if the program reads the content of our file, we can read somehow the password for behemoth5. But how can we put the content of it into our file? I was trying to open two files simultaneously, but didn't succeed. Then, I got it - we can use symbolic links. We can create a file on the run of our pid number and link it to behemoth5 password file. Then it will just put it's content into the terminal. It worked:
+```
+behemoth4@behemoth:/behemoth$ sh -c 'echo $$; ln -s /etc/behemoth_pass/behemoth5 /tmp/`echo $$`; exec /behemoth/behemoth4'
+29624
+Finished sleeping, fgetcing
+****
+```
+You can read more about sh -c in here:
+https://serverfault.com/questions/205498/how-to-get-pid-of-just-started-process
+
+
 You can use the [editor on GitHub](https://github.com/int3rsys/behemoth-solutions/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
