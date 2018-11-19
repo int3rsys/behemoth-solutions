@@ -602,6 +602,53 @@ Finished sleeping, fgetcing
 You can read more about sh -c in here:
 https://serverfault.com/questions/205498/how-to-get-pid-of-just-started-process
 
+## Behemoth5
+
+This one is fairly straight forward. I begin with analyzing the file:
+```
+behemoth5@behemoth:/behemoth$ file behemoth5
+behemoth5: setuid ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=d0f82598bee02ad55f127dcbdaafa4ef7403e612, not stripped
+```
+nothing special here. Running the program gives us a blank output. Let's analyse the function calls:
+```
+001 0x00000500 0x08048500 GLOBAL   FUNC   16 imp.fgets
+002 0x00000510 0x08048510 GLOBAL   FUNC   16 imp.fclose
+003 0x00000520 0x08048520 GLOBAL   FUNC   16 imp.rewind
+004 0x00000530 0x08048530 GLOBAL   FUNC   16 imp.htons
+005 0x00000540 0x08048540 GLOBAL   FUNC   16 imp.fseek
+006 0x00000550 0x08048550 GLOBAL   FUNC   16 imp.perror
+007 0x00000560 0x08048560 GLOBAL   FUNC   16 imp.malloc
+008 ---------- 0x00000000   WEAK NOTYPE   16 imp.__gmon_start__
+009 0x00000570 0x08048570 GLOBAL   FUNC   16 imp.exit
+010 0x00000580 0x08048580 GLOBAL   FUNC   16 imp.strlen
+011 0x00000590 0x08048590 GLOBAL   FUNC   16 imp.__libc_start_main
+012 0x000005a0 0x080485a0 GLOBAL   FUNC   16 imp.ftell
+013 0x000005b0 0x080485b0 GLOBAL   FUNC   16 imp.fopen
+014 0x000005c0 0x080485c0 GLOBAL   FUNC   16 imp.memset
+015 0x000005d0 0x080485d0 GLOBAL   FUNC   16 imp.sendto
+016 0x000005e0 0x080485e0 GLOBAL   FUNC   16 imp.atoi
+017 0x000005f0 0x080485f0 GLOBAL   FUNC   16 imp.socket
+018 0x00000600 0x08048600 GLOBAL   FUNC   16 imp.gethostbyname
+019 0x00000610 0x08048610 GLOBAL   FUNC   16 imp.close
+```
+We can see that we have functions that transfer data using sockets and file reading functions. Interesting. Let's analysize it with radare:
+![Image](behemoth6_1.png)
+We can see here that the file behemoth6 (which contains the pass) is being read and stored in a new memory address. We are going to send this buffer later on. Let's look a bit forward:
+![Image](behemoth6_2.png)
+
+In the green box, we are setting up the socket. Before that, we set got a file descriptor for the localhost (a network device), it seems that we are going to connect to local host. In the yellow box, we set up a port which is 1337. It then uses hton(), which is basically a function that converts the port to little-endian systems. Nothing special. In the orange box we set up the buffer to sent to our local host, and then (we can't see in the picutre), the program uses sentdo() function, pushes out buffer that contains the password and sends it to localhost:1337. All we have to do is to listen to that port. I initially tried:
+```
+nc -l 1337
+```
+and then running behemoth5 on a different shell, but it didn't succeeed. It seems that the port is udp, so we need to specify that to netcat:
+
+```
+behemoth5@behemoth:/behemoth$ nc -ul -p 1337
+****
+(on a different shell I executed behemoth5
+```
+
+
 
 You can use the [editor on GitHub](https://github.com/int3rsys/behemoth-solutions/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
